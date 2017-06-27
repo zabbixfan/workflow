@@ -3,6 +3,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flasgger import Swagger
 import logging
 
 import config
@@ -50,4 +51,5 @@ def create_app():
     CORS(app, resources={r"*": {"origins": config.Config.CORS_ORIGINS}})
     # LOG
     logger_init()
+    Swagger(app)
     return app

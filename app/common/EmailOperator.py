@@ -20,7 +20,7 @@ def GetSmtp():
     return smtp
 
 
-def SendEmail(to_addrs, title, msg, type="html", from_name=Config.EMALL_USER, toHander=None):
+def SendEmail(to_addrs, title, msg, type="html", from_name=Config.EMALL_USER, toHander=None[('name','mail'),('name','mail')]):
     """
     发送邮件
     :param to_addrs: 接收方的邮件地址

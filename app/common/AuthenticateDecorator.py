@@ -41,7 +41,7 @@ def need_power(power):
                 g.user = user_obj.user
                 g.userID = user_obj.user.get("id")
                 if Config.Powers.get(power) and (
-                        Config.Powers.get(power) in g.user.get("role")):
+                        g.user.get("role")) in Config.Powers.get(power):
                     response = func(*args, **kwargs)
                     return response
                 else:

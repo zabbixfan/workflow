@@ -5,9 +5,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flasgger import Swagger
 import logging
+from celery import Celery
 
 import config
-
+celery = Celery(__name__,broker=config.Config.CELERY_BROKER_URL)
 db = SQLAlchemy()
 
 
@@ -42,6 +43,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     # 注册配置文件
     app.config.from_object(config.Config)
+    celery.conf.update(app.config)
     # SQLAlchemy
     db.init_app(app)
     # 注册 Blueprint

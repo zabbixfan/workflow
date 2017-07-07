@@ -6,8 +6,7 @@ statusMapper={
     'Apply':2,
     'Approve':3,
     'Refuse': 1,
-    'Execute':4,
-    'Complete':5,
+    'Complete':4,
     'Delete': 0
 }
 
@@ -24,6 +23,7 @@ class Tickets(db.Model):
     email = db.Column(db.String(255),default="")
     data = db.Column(db.String(65535), default="")
     createTime = db.Column(db.DATETIME)
+    requestManEng = db.Column(db.String(255),default="")
 
     def save(self,wait_commit=False):
         # if not self.id:

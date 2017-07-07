@@ -10,6 +10,10 @@ from app import logger
 import re,json
 from uuid import uuid1 as uuid
 from datetime import datetime
+from config import Config
+from app.tasks.mailTask import applyMail
+from app.tasks.jobTask import projectJob
+from collections import namedtuple
 def ticketList(keyword=None,offset=0,limit=20,type=None,status=None):
     userinfo = g.user
     role = userinfo.get("role","")
@@ -18,7 +22,7 @@ def ticketList(keyword=None,offset=0,limit=20,type=None,status=None):
     if status:
         q = q.filter(Tickets.status==status)
     else:
-        q = q.filter(Tickets.status!=statusMapper['Delete'])
+        q = q.filter(Tickets.status!='Delete')
     if type:
         q = q.filter(Tickets.type==type)
     if not role:
@@ -35,7 +39,7 @@ def ticketList(keyword=None,offset=0,limit=20,type=None,status=None):
         "requestMan":data.requestMan,
         "auditor": data.auditor,
         "executor": data.executor,
-        "createAt": datetime_to_strtime(data.createTime)
+        "createAt": datetime_to_strtime(data.createTime,format_str="%Y-%m-%d %H:%M:%S")
     })
 def getTicketInfo(id):
     res ={}
@@ -49,19 +53,36 @@ def getTicketInfo(id):
         "requestMan":q.requestMan,
         "auditor": q.auditor,
         "executor": q.executor,
-        "createAt": datetime_to_strtime(q.createTime),
+        "createAt": datetime_to_strtime(q.createTime,format_str="%Y-%m-%d %H:%M:%S"),
         "data": json.loads(q.data)
         }
     return res
 def deleteTicketInfo(id):
+    username = g.user.get("name", "")
     q = Tickets.query.filter(Tickets.id==id).first()
     if q:
-        q.status = statusMapper['Delete']
+        q.status = 'Delete'
         q.commit()
         return "delete ticket success"
 
+def auditTicket(id,status):
+    q = Tickets.query.filter(Tickets.id==id).first()
+    if q:
+        q.status = status
+        q.commit()
+    if status == 'Approve':
+        query = {
+            'id':q.id,
+            'status': q.status,
+            'data': json.loads(q.data),
+            'requestMan': q.requestMan,
+            'email': q.email
+
+        }
+        jobDict[q.type].delay(query)
+    return "audit ticket success",ResposeStatus.Success
 class newTicket:
-    def __init__(self,requestMan,name,status,types,id=None,email=None):
+    def __init__(self,requestMan,name,status,types,id=None,email=None,requestManEng=None):
         self.requestMan = requestMan
         self.id = uuid().get_hex()
         if id:
@@ -70,12 +91,12 @@ class newTicket:
         self.status = status
         self.type = types
         self.email = email
-
+        self.requestManEng = requestManEng
 class projectTicket(newTicket):
     def dataCheck(self,data):
+        print data
         error = False
         message =''
-        print data
         params = [
             {
                 'name': 'projectName',
@@ -99,7 +120,7 @@ class projectTicket(newTicket):
             },
             {
                 'name': 'domainName',
-                'rule': r'^[\d\w\.\-]+$'
+                'rule': r'(^$|^[\d\w\.\-]+$)'
             }
         ]
         for param in params:
@@ -129,7 +150,7 @@ class projectTicket(newTicket):
             {
                 projectName:
                 projectDescription:
-                projectGroupId
+                projectGroupName
                 projectType
                 owner
                 domainName
@@ -138,29 +159,37 @@ class projectTicket(newTicket):
          ]
         :return: 
         '''
-        paras = {}
-        for d in data:
-            error,message = self.dataCheck(d)
-            if error:
-                return {'message':message},ResposeStatus.ParamFail
+        error,message = self.dataCheck(data)
+        if error:
+            return {'message':message},ResposeStatus.ParamFail
+        # for d in data:
+        #     error,message = self.dataCheck(d)
+        #     if error:
+        #         return {'message':message},ResposeStatus.ParamFail
         else:
             ticket = Tickets.get_by_ticketid(self.id)
             if not ticket:
                 ticket = Tickets()
                 ticket.createTime = datetime.now()
             ticket.requestMan = self.requestMan
+            ticket.requestManEng = self.requestManEng
             ticket.name = self.name
-            ticket.status = statusMapper[self.status]
+            ticket.status = self.status
             ticket.type = self.type
             ticket.id = self.id
             ticket.data = json.dumps(data)
             if self.email:
                 ticket.email = self.email
             ticket.save()
-        if self.type == statusMapper['Apply']:
-            pass
-            #mail to auditor
-        elif self.type == statusMapper['Approve']:
+        if self.status == 'Apply':
+            toUser = Config.AUDITOR
+            toHander = Config.AUDITORHANDER
+            content = {
+                "title": "Workflow工单申请",
+                "content": "<h1>您有一个新的工单待处理，请登录http://workflow.apitops.com查看</h1s>"
+            }
+            applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
+        elif self.status == 'Approve':
             #mail to auditor and executor
             pass
         return {
@@ -174,4 +203,7 @@ class projectTicket(newTicket):
 
 typeDict = {
     "createProject": projectTicket
+}
+jobDict = {
+    "createProject": projectJob
 }

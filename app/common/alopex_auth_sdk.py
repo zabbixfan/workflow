@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from flask import request, g,redirect,make_response
 from itsdangerous import TimedJSONWebSignatureSerializer as JwtSerializer
-import functools
+import functools,hashlib
 
 from config import Config
 
@@ -88,3 +88,13 @@ def logout():
     response = make_response(redirect("{0}?appid={1}&callback={2}".format(AUTH_SERVER_LOGOUT_URL, APP_ID, request.host)))
     response.delete_cookie('accesstoken')
     return response
+def SignatureGeneration(res_dict={}, secret_key="", time_out=300):
+    key_list = res_dict.keys()
+    key_list.sort()
+    str = u''
+    for key in key_list:
+        if not isinstance(res_dict.get(key), (dict, list)):
+            str += unicode(res_dict.get(key))
+    sign_str = secret_key + str
+    sign = hashlib.md5(sign_str).hexdigest()[8:-8]
+    return sign

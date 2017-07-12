@@ -65,12 +65,14 @@ def projectJob(query):
                         q.commit()
                         toUser = Config.AUDITOR
                         toHander = Config.AUDITORHANDER
-                        if query not in toUser:
+                        print query['email']
+                        print toUser
+                        if query['email'] not in toUser:
                             toUser.append(query['email'])
                             toHander.append((query['requestMan'], query['email']))
                         content = {
                             "title": "Workflow工单申请",
-                            "content": "<h1>您有一个新的工单已完成，工程名称：{}，ID为：{}，代码仓库地址为：{}</h1>".format(data['projectName'],projectId,repoUrl)
+                            "content": "<h4>您有一个新的工单已完成，工程名称：{}，ID为：{}，代码仓库地址为：{}</h4>".format(data['projectName'],projectId,repoUrl)
                         }
 
                         applyMail(toUser=toUser, toHander=toHander, mailArgs=content)

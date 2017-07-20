@@ -10,22 +10,23 @@ PROJECT_ENV = "GA"
 PROJECT_NAME = "brokerService"
 PROJECT_IP_ADDR = "192.168.255.20"
 PROJECT_CHECK_STATUS = "1"   # 1 正常  0 异常
+PROJECT_IP_PORT = 8123
 
 
-def project_health_check(project,env,status,ip_addr):
+def project_health_check(project,env,status,ip_addr,port):
     ts = int(time.time())
     payload = [
     {
-        "endpoint": "project_health_status",
-        "metric": 'health_check_%s' % project,
+        "endpoint": "%s" % ip_addr,
+        "metric": 'project_health_check',
         "timestamp": ts,
         "step": 10,
         "value": status,
         "counterType": "GAUGE",
-        "tags": "env=%s,ip=%s" % (env,ip_addr),
+        "tags": "env=%s,project=%s," % (env,project),
     }
     ]
 
     r = requests.post(OPEN_FALCON_AGENT_URL, data=json.dumps(payload))
 
-project_health_check(PROJECT_NAME,PROJECT_ENV,PROJECT_CHECK_STATUS,PROJECT_IP_ADDR)
+project_health_check(PROJECT_NAME,PROJECT_ENV,PROJECT_CHECK_STATUS,PROJECT_IP_ADDR,PROJECT_IP_PORT)

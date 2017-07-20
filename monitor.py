@@ -23,7 +23,7 @@ def project_health_check(project,env,status,ip_addr,port):
         "step": 10,
         "value": status,
         "counterType": "GAUGE",
-        "tags": "env=%s,project=%s," % (env,project),
+        "tags": "env=%s,project=%s,port=%s," % (env,project,port),
     }
     ]
 

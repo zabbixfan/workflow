@@ -80,7 +80,10 @@ class ticket(Resource):
     def delete(self,id):
         return ApiResponse(deleteTicketInfo(id))
 
-
+class c(Resource):
+    def get(self):
+        return {"a":"b"}
 
 api.add_resource(tickets,'/tickets')
 api.add_resource(ticket,'/tickets/<string:id>')
+api.add_resource(c,'/test')

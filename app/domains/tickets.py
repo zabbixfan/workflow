@@ -13,7 +13,6 @@ from datetime import datetime
 from config import Config
 from app.tasks.mailTask import applyMail
 from app.tasks.jobTask import projectJob
-from collections import namedtuple
 def ticketList(keyword=None,offset=0,limit=20,type=None,status=None):
     userinfo = g.user
     role = userinfo.get("role","")

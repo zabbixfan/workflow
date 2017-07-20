@@ -67,11 +67,4 @@ class Project(db.Model):
     @staticmethod
     def get_by_pid(id):
         return Project.query.filter(Project.id==id).first()
-# class ticketType:
-#     Project="project"
-# class ticketStatus:
-#     Apply="apply",
-#     Approve="approve",
-#     Refuse="refuse",
-#     Execute="execute",
-#     Complete="complete"
+

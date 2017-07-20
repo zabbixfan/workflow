@@ -5,7 +5,7 @@ import time
 import requests
 import json
 
-OPEN_FALCON_AGENT_URL = "http://192.168.255.20:1988/v1/push"
+OPEN_FALCON_AGENT_URL = "http://192.168.3.103:1988/v1/push"
 PROJECT_ENV = "GA"
 PROJECT_NAME = "brokerService"
 PROJECT_IP_ADDR = "192.168.255.20"

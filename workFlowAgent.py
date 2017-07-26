@@ -65,7 +65,7 @@ def restartCommand(task,hostFile):
         elif type in ["Java:Jar","Java:HttpJar"]:
             projectType = "java"
         projectName = name.lower().replace("-","")
-        cmd = 'pyenv activate workflow && /Users/manatee/.pyenv/shims/ansible -i {} {} -m shell -a "/etc/init.d/{}-{} restart" -u root '.format(hostFile,ip,projectType,projectName)
+        cmd = 'ansible -i {} {} -m shell -a "/etc/init.d/{}-{} restart" -u root '.format(hostFile,ip,projectType,projectName)
         print cmd
         p = subprocess.Popen(["/bin/bash", "-l", "-c", cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         res, _ = p.communicate()

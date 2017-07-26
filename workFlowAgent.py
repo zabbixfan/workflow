@@ -1,4 +1,7 @@
 #!coding:utf-8
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 import socket,threading,subprocess,logging,json,os,jinja2
 from config import Config
 from sqlalchemy import create_engine
@@ -8,9 +11,8 @@ from sqlalchemy.orm import sessionmaker
 from app.common.httpHelp import httpRequset
 from app.tasks.mailTask import applyMail
 serverPort = Config.WORKFLOW_AGENT_PORT
-# serverPort = 6212
 allowHost = ['192.168.6.120','192.168.255.1','192.168.99.219']
-eng = create_engine("mysql+mysqldb://root:zxc123zxc@192.168.7.60/workflow?charset=utf8mb4")
+eng = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 Model = declarative_base()
 Session  = sessionmaker(bind=eng)
 session = Session()

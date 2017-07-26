@@ -1,3 +1,4 @@
+#!coding:utf-8
 import socket,threading,subprocess,logging,json,os,jinja2
 from config import Config
 from sqlalchemy import create_engine

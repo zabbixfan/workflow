@@ -74,7 +74,7 @@ def restartCommand(task,hostFile):
             success = False
             logging.error("".format(task['id'],res))
     if success:
-        q = session.query(Tickets).filter(Tickets.id == task['data']['id']).first()
+        q = session.query(Tickets).filter(Tickets.id == task['id']).first()
         q.status = 'Complete'
         q.commit()
         toUser = Config.AUDITOR

@@ -5,6 +5,7 @@ from sqlalchemy import Column,String,DATETIME
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.common.httpHelp import httpRequset
+from app.tasks.mailTask import applyMail
 serverPort = Config.WORKFLOW_AGENT_PORT
 # serverPort = 6212
 allowHost = ['192.168.6.120','192.168.255.1','192.168.99.219']
@@ -37,9 +38,7 @@ class Tickets(Model):
     @staticmethod
     def commit():
         session.commit()
-    @staticmethod
-    def get_by_ticketid(id):
-        return Tickets.query.filter(Tickets.id==id).first()
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s - %(message)s",
@@ -55,6 +54,8 @@ def getProjectType(projectName):
         return "tomcat"
 
 def restartCommand(task,hostFile):
+    print json.dumps(task,indent=4)
+    success = True
     for serv in task['data']['restartProject']:
         name,env,ip = serv.split('/')
         type = getProjectType(name)
@@ -63,13 +64,32 @@ def restartCommand(task,hostFile):
         elif type in ["Java:Jar","Java:HttpJar"]:
             projectType = "java"
         projectName = name.lower().replace("-","")
-        cmd = 'ansible -i {} {} -m shell -a "/etc/init.d/{}-{} restart" -u root '.format(hostFile,ip,projectType,projectName)
+        cmd = 'pyenv activate workflow && /Users/manatee/.pyenv/shims/ansible -i {} {} -m shell -a "/etc/init.d/{}-{} restart" -u root '.format(hostFile,ip,projectType,projectName)
         print cmd
         p = subprocess.Popen(["/bin/bash", "-l", "-c", cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         res, _ = p.communicate()
         print res
-
-
+        if res.find('is running with pid:') == -1:
+            success = False
+            logging.error("".format(task['id'],res))
+    if success:
+        q = session.query(Tickets).filter(Tickets.id == task['data']['id']).first()
+        q.status = 'Complete'
+        q.commit()
+        toUser = Config.AUDITOR
+        toHander = Config.AUDITORHANDER
+        print task['email']
+        print toUser
+        if task['email'] not in toUser:
+            toUser.append(task['email'])
+            toHander.append((task['requestMan'], task['email']))
+            print toUser
+            print toHander
+        content = {
+            "title": "Workflow工单申请",
+            "content": "<h4>您有一个新的工单已完成，服务已重启</h4>"
+        }
+        applyMail(toUser=toUser, toHander=toHander, mailArgs=content)
 
 def workFunction(sock,addr):
     if addr[0] not in allowHost:

@@ -24,7 +24,6 @@ def post_args(return_parse_args=True):
     rp.add_argument("name")
     rp.add_argument("ticketType",required=True,nullable=False)
     rp.add_argument("status")
-    # rp.add_argument("data",type=dict,default=[],action='append')
     rp.add_argument("data", type=dict)
     return rp.parse_args() if return_parse_args else rp
 def audit_args(return_parse_args=True):
@@ -38,7 +37,6 @@ class tickets(Resource):
     @need_user()
     def get(self):
         args = get_args()
-        print g.user
         return ApiResponse(ticketList(keyword=args.keyword,offset=args.offset,limit=args.limit,status=args.status,type=args.type))
     @swag_from(get_request_parser_doc_dist("add a ticket", ["Tickets"], post_args(False)))
     @need_user()

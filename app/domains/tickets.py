@@ -12,7 +12,7 @@ from uuid import uuid1 as uuid
 from datetime import datetime
 from config import Config
 from app.tasks.mailTask import applyMail
-from app.tasks.jobTask import projectJob
+from app.tasks.jobTask import createProjectJob,restartProjectJob
 def ticketList(keyword=None,offset=0,limit=20,type=None,status=None):
     userinfo = g.user
     role = userinfo.get("role","")
@@ -75,8 +75,8 @@ def auditTicket(id,status):
             'status': q.status,
             'data': json.loads(q.data),
             'requestMan': q.requestMan,
-            'email': q.email
-
+            'email': q.email,
+            'type': q.type
         }
         jobDict[q.type].delay(query)
     return "audit ticket success",ResposeStatus.Success
@@ -91,6 +91,18 @@ class newTicket:
         self.type = types
         self.email = email
         self.requestManEng = requestManEng
+    def Approve(self,ticket):
+        data = {
+            'id': ticket.id,
+            'status': ticket.status,
+            'data': json.loads(ticket.data),
+            'requestMan': ticket.requestMan,
+            'email': ticket.email,
+            'type': ticket.type
+        }
+        # print json.dumps(data,indent=4)
+        jobDict[ticket.type].delay(data)
+
 class projectTicket(newTicket):
     def dataCheck(self,data):
         print data
@@ -161,10 +173,6 @@ class projectTicket(newTicket):
         error,message = self.dataCheck(data)
         if error:
             return {'message':message},ResposeStatus.ParamFail
-        # for d in data:
-        #     error,message = self.dataCheck(d)
-        #     if error:
-        #         return {'message':message},ResposeStatus.ParamFail
         else:
             ticket = Tickets.get_by_ticketid(self.id)
             if not ticket:
@@ -189,20 +197,108 @@ class projectTicket(newTicket):
             }
             applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
         elif self.status == 'Approve':
-            #mail to auditor and executor
-            pass
-        return {
-                    'data': data,
-                    'requestMan': self.requestMan,
-                    'id': self.id,
-                    'type': self.type,
-                    'name': self.name,
-                    'status': self.status
-                },ResposeStatus.Success
+            self.Approve(ticket=ticket)
 
+        return {
+                'data': data,
+                'requestMan': self.requestMan,
+                'id': self.id,
+                'type': self.type,
+                'name': self.name,
+                'status': self.status
+        },ResposeStatus.Success
+class restartTicket(newTicket):
+    def dataCheck(self,data):
+        error = False
+        message =''
+        params = [
+            {
+                'name': 'restartProject',
+            }
+        ]
+        for param in params:
+            if param['name'] not in data.keys():
+                error = True
+                message = 'param {} not found'.format(param['name'])
+                logger().error(data)
+                return error,message
+            elif not param['name']:
+                error = True
+                message = 'param {} can\'t be none'.format(param['name'])
+                logger().error(data)
+                return error,message
+        if isinstance(data['restartProject'],list):
+            if len(data['restartProject'])<3:
+                pass
+            else:
+                logger().error(data)
+                error = True
+                message = '重启服务最多只能选择2个'
+                return error, message
+        else:
+            logger().error(data)
+            error = True
+            message = 'param restartProject type should be list'
+            return error, message
+
+        return error,message
+    def apply(self,data):
+        '''
+
+        :param data:
+        data:[
+            {
+                restartProject:['projectName/env/ip','']
+            }
+         ]
+        :return:
+        '''
+        pass
+        error,message = self.dataCheck(data)
+        if error:
+            return {'message':message},ResposeStatus.ParamFail
+        else:
+            ticket = Tickets.get_by_ticketid(self.id)
+            if not ticket:
+                ticket = Tickets()
+                ticket.createTime = datetime.now()
+            ticket.requestMan = self.requestMan
+            ticket.requestManEng = self.requestManEng
+            ticket.name = self.name
+            ticket.status = self.status
+            ticket.type = self.type
+            ticket.id = self.id
+            ticket.data = json.dumps(data)
+            if self.email:
+                ticket.email = self.email
+            ticket.save()
+        if self.status == 'Apply':
+            toUser = Config.AUDITOR
+            toHander = Config.AUDITORHANDER
+            content = {
+                "title": "Workflow工单申请",
+                "content": "<h1>您有一个新的工单待处理，请登录http://workflow.apitops.com查看</h1s>"
+            }
+            applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
+        if self.status == 'Approve':
+            self.Approve(ticket)
+        if self.status == 'Complete':
+            print 'complete'
+        if self.status == 'Refuse':
+            print 'refuse'
+        return {
+                'data': data,
+                'requestMan': self.requestMan,
+                'id': self.id,
+                'type': self.type,
+                'name': self.name,
+                'status': self.status
+        },ResposeStatus.Success
 typeDict = {
-    "createProject": projectTicket
+    "createProject": projectTicket,
+    "restartProject": restartTicket
 }
 jobDict = {
-    "createProject": projectJob
+    "createProject": createProjectJob,
+    "restartProject": restartProjectJob
 }

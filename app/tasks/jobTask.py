@@ -3,15 +3,14 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 from app import celery
-import json,urllib
+import json,urllib,socket
 from app.common.httpHelp import httpRequset
 from app import logger
 from config import Config
 from .mailTask import applyMail
 from app.models.tickets import Tickets
 @celery.task()
-def projectJob(query):
-    print json.dumps(query,indent=4)
+def createProjectJob(query):
     data = query['data']
     params = {
         'search': data['projectGroupName']
@@ -91,4 +90,18 @@ def projectJob(query):
     else:
         logger().warn('{}\n{}'.format(query['id'], 'codehub group not found'))
         return None
-
+@celery.task()
+def restartProjectJob(query):
+    host = Config.WORKFLOW_AGENT_HOST
+    port = Config.WORKFLOW_AGENT_PORT
+    data = json.dumps(query)
+    s = socket.socket()
+    socket.setdefaulttimeout(1)
+    try:
+        s.connect((host, port))
+        s.sendall(data)
+        print s.recv(1024)
+    except Exception as e:
+        logger().error('{}:{}:{},{}'.format(query['id'],host,port,str(e)))
+    s.close()
+    return None

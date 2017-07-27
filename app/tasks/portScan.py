@@ -36,7 +36,7 @@ def singleCheck(service):
         s.close()
     status = 1 if res == 'success' else 0
     #print res
-    monitor.project_health_check(service[0],service[1],status,service[2],service[3])
+    #monitor.project_health_check(service[0],service[1],status,service[2],service[3])
 
     # t = threading.Thread(target=monitor.project_health_check,args=(service[0],service[1],status,service[2],service[3]))
     # t.start()

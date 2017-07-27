@@ -98,7 +98,8 @@ class newTicket:
             'data': json.loads(ticket.data),
             'requestMan': ticket.requestMan,
             'email': ticket.email,
-            'type': ticket.type
+            'type': ticket.type,
+            'name': ticket.name
         }
         # print json.dumps(data,indent=4)
         jobDict[ticket.type].delay(data)

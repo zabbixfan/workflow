@@ -43,6 +43,8 @@ def ServicesList(keyword,envs,offset,limit,status):
                 results = [item for item in results if item['status']==status]
             else:
                 results = [item for item in results if item['status']]
+        if status is False:
+            results = [item for item in results if item['status'] == 'failure']
     TotalCount = len(results)
     if limit==-1 or limit==0:
         results = results[offset:]

@@ -74,7 +74,7 @@ def writeTicketLog(tid,result):
     log.ticketId = tid
     for k,status in result.items():
         if result[k]:
-            log.content = status
+            log.content = json.dump(status)
     session.add(log)
     session.commit()
 def restartCommand(task):

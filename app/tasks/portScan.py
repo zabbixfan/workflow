@@ -1,12 +1,14 @@
 #!coding:utf-8
 # from app.models.projectInfo import ProjectInfo
-from app.tasks.cacheWithTime import cache
 import socket
-from config import Config
-import consul,time
+
+import consul
+import time
 from concurrent import futures
-import monitor
-import threading
+
+from app.common.cacheWithTime import cache
+from config import Config
+
 c = consul.Consul()
 @cache(timeout=3600)
 def getInfo():
@@ -35,7 +37,6 @@ def singleCheck(service):
     finally:
         s.close()
     status = 1 if res == 'success' else 0
-    #print res
     #monitor.project_health_check(service[0],service[1],status,service[2],service[3])
 
     # t = threading.Thread(target=monitor.project_health_check,args=(service[0],service[1],status,service[2],service[3]))

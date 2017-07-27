@@ -5,7 +5,7 @@ sys.setdefaultencoding('utf-8')
 import socket,threading,logging,json,os,jinja2,re
 from config import Config
 from sqlalchemy import create_engine
-from sqlalchemy import Column,String,DATETIME
+from sqlalchemy import Column,String,DATETIME,Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.common.httpHelp import httpRequset
@@ -30,7 +30,21 @@ class Tickets(Model):
     data = Column(String(65535), default="")
     createTime = Column(DATETIME)
     requestManEng = Column(String(255),default="")
+    @staticmethod
+    def commit():
+        session.commit()
 
+class TicketLog(Model):
+    __tablename__ = "workflow_operatelog"
+    id = Column(Integer,primary_key=True)
+    ticketId = Column(String(255),default="")
+    user = Column(String(255),default="")
+    time = Column(DATETIME)
+    action = Column(String(255),default="")
+    content = Column(String(1000),default="")
+    @staticmethod
+    def commit():
+        session.commit()
     def save(self,wait_commit=False):
         # if not self.id:
         #     self.id=uuid().get_hex()
@@ -39,9 +53,7 @@ class Tickets(Model):
             session.flush()
         else:
             session.commit()
-    @staticmethod
-    def commit():
-        session.commit()
+
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -57,6 +69,14 @@ def getProjectType(projectName):
     else:
         return "tomcat"
 
+def writeTicketLog(tid,result):
+    log = TicketLog()
+    log.ticketId = tid
+    for k,status in result.items():
+        if result[k]:
+            log.content = status
+    session.add(log)
+    session.commit()
 def restartCommand(task):
     print json.dumps(task,indent=4)
     success = True
@@ -69,10 +89,12 @@ def restartCommand(task):
             projectType = "java"
         projectName = name.lower().replace("-","")
         resources = [{"hostname": ip, "username": "root"}]
-        cmd = "/etc/init.d/{}-{} restart".format(projectType,projectName)
+        # cmd = "/etc/init.d/{}-{} restart".format(projectType,projectName)
+        cmd = "whoami"
         tqm = ansibleRunner(resources)
         tqm.run(host_list=[ip], module_name='shell', module_args=cmd)
         taskResult = tqm.get_result()
+        writeTicketLog(task['id'],taskResult)
         if taskResult['failed'] or taskResult['unreachable']:
             success = False
             logging.error("{}:{},{}".format(task['id'],taskResult['failed'],taskResult['unreachable']))

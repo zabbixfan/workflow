@@ -1,13 +1,15 @@
 #!coding:utf-8
-import requests,json,re
-from app.common.httpHelp import httpRequset
+import re
+
+import consul
+from sqlalchemy import Column, String
 from sqlalchemy import create_engine
-from sqlalchemy import Column,String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.tasks.cacheWithTime import cache
 from zerorpc import Client
-import consul
+
+from app.common.httpHelp import httpRequset
+
 eng = create_engine("mysql+mysqldb://root:zxc123zxc@192.168.7.60/workflow?charset=utf8mb4")
 Model = declarative_base()
 Session  = sessionmaker(bind=eng)

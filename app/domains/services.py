@@ -1,6 +1,6 @@
 #!coding:utf-8
 import consul
-
+from app.common.cmdb_sdk import getProjectType
 
 def append(res,service):
     key = service['Key']
@@ -25,26 +25,30 @@ def ServicesList(keyword,envs,offset,limit,status):
     for service in services:
         key = service['Key']
         project = key.split('/')[1]
+        type = getProjectType(project)
+        print type
         env = key.split('/')[2]
         if key.endswith('status') or (key.count("/") == 2 and not key.endswith('port')):
-            if keyword and envs:
-                if project in keyword and env in envs:
+            if type in ['Java:War','Java:HttpJar']:
+                if keyword and envs:
+                    if project in keyword and env in envs:
+                        append(results,service)
+                elif keyword and not envs:
+                    if project in keyword:
+                        append(results, service)
+                elif not keyword and envs:
+                    if env in envs:
+                        append(results,service)
+                elif not keyword and not envs:
                     append(results,service)
-            elif keyword and not envs:
-                if project in keyword:
-                    append(results, service)
-            elif not keyword and envs:
-                if env in envs:
-                    append(results,service)
-            elif not keyword and not envs:
-                append(results,service)
         if status:
             if status in ['failure','ok']:
                 results = [item for item in results if item['status']==status]
+            elif status == 'true':
+                results = [item for item in results if item['status']=='failure']
             else:
                 results = [item for item in results if item['status']]
-        if status is False:
-            results = [item for item in results if item['status'] == 'failure']
+
     TotalCount = len(results)
     if limit==-1 or limit==0:
         results = results[offset:]

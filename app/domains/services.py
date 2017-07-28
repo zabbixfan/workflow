@@ -25,11 +25,10 @@ def ServicesList(keyword,envs,offset,limit,status):
     for service in services:
         key = service['Key']
         project = key.split('/')[1]
-        type = getProjectType(project)
-        print type
         env = key.split('/')[2]
-        if key.endswith('status') or (key.count("/") == 2 and not key.endswith('port')):
-            if type in ['Java:War','Java:HttpJar']:
+        if key.endswith('status') or (key.count("/") == 2 and not key.endswith('port') and not key.endswith('type')):
+            _,type = c.kv.get('services/{}/type'.format(project))
+            if type['Value'] in ['Java:War','Java:HttpJar']:
                 if keyword and envs:
                     if project in keyword and env in envs:
                         append(results,service)

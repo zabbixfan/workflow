@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.common.httpHelp import httpRequset
 from app.common.ansible_sdk import ansibleRunner
 from app.tasks.mailTask import applyMail
+from app.common.time_helper import current_datetime
 serverPort = Config.WORKFLOW_AGENT_PORT
 allowHost = ['192.168.6.120','192.168.255.1','192.168.99.219']
 eng = create_engine(Config.SQLALCHEMY_DATABASE_URI)
@@ -69,14 +70,26 @@ def getProjectType(projectName):
     else:
         return "tomcat"
 
-def writeTicketLog(tid,result):
+def writeTicketLog(servcie,tid,result):
     log = TicketLog()
     log.ticketId = tid
-    for k,status in result.items():
-        if result[k]:
-            log.content = json.dump(status)
-    session.add(log)
-    session.commit()
+    log.time = current_datetime()
+    if result['unreachable']:
+        log.content = "{}:{}".format(servcie,result['unreachable'])
+    elif result['failed']:
+        log.content = "{}:{}".format(servcie,result['failed'])
+    elif result['success']:
+        for k,v in result['success'].items():
+            if v['stderr']:
+                log.content = "{}:{}".format(servcie,v['stderr'])
+                break
+            if v['stderr_lines']:
+                log.content = "{}:{}".format(servcie,','.join(v['stderr_lines']))
+                break
+            if v['stdout_lines']:
+                log.content = "{}:{}".format(servcie,v['stdout_lines'][-1])
+            session.add(log)
+            session.commit()
 def restartCommand(task):
     print json.dumps(task,indent=4)
     success = True
@@ -89,12 +102,13 @@ def restartCommand(task):
             projectType = "java"
         projectName = name.lower().replace("-","")
         resources = [{"hostname": ip, "username": "root"}]
-        # cmd = "/etc/init.d/{}-{} restart".format(projectType,projectName)
-        cmd = "whoami"
+        cmd = "/etc/init.d/{}-{} restart".format(projectType,projectName)
+        #cmd = "whoami"
         tqm = ansibleRunner(resources)
         tqm.run(host_list=[ip], module_name='shell', module_args=cmd)
         taskResult = tqm.get_result()
-        writeTicketLog(task['id'],taskResult)
+        print taskResult
+        writeTicketLog(serv,task['id'],taskResult)
         if taskResult['failed'] or taskResult['unreachable']:
             success = False
             logging.error("{}:{},{}".format(task['id'],taskResult['failed'],taskResult['unreachable']))
@@ -117,7 +131,7 @@ def restartCommand(task):
             toHander.append((task['requestMan'], task['email']))
         content = {
             "title": "Workflow工单申请",
-            "content": "<p>您的工单{}已完成，服务已重启<p>".format(task['name'])
+            "content": "<p>您的工单{}已完成，服务已重启,请登录workflow查看重启结果<p>".format(task['name'])
         }
         applyMail(toUser=toUser, toHander=toHander, mailArgs=content)
 

@@ -7,30 +7,30 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from zerorpc import Client
-
+from app.common.cmdb_sdk import getProjectType
 from app.common.httpHelp import httpRequset
 
-eng = create_engine("mysql+mysqldb://root:zxc123zxc@192.168.7.60/workflow?charset=utf8mb4")
-Model = declarative_base()
-Session  = sessionmaker(bind=eng)
-session = Session()
-class ProjectInfo(Model):
-    __tablename__ = "workflow_projectInfo"
-    pid = Column(String(255))
-    project = Column(String(255), primary_key=True)
-    env = Column(String(32), primary_key=True)
-    ip = Column(String(255), primary_key=True)
-    port = Column(String(32),default="")
-    def save(self,wait_commit=False):
-            session.add(self)
-            if wait_commit:
-                session.flush()
-            session.commit()
-    @staticmethod
-    def commit():
-        session.commit()
-    def __repr__(self):
-        return 'projectInfo<project={},env={}>'.format(self.project,self.env)
+# eng = create_engine("mysql+mysqldb://root:zxc123zxc@192.168.7.60/workflow?charset=utf8mb4")
+# Model = declarative_base()
+# Session  = sessionmaker(bind=eng)
+# session = Session()
+# class ProjectInfo(Model):
+#     __tablename__ = "workflow_projectInfo"
+#     pid = Column(String(255))
+#     project = Column(String(255), primary_key=True)
+#     env = Column(String(32), primary_key=True)
+#     ip = Column(String(255), primary_key=True)
+#     port = Column(String(32),default="")
+#     def save(self,wait_commit=False):
+#             session.add(self)
+#             if wait_commit:
+#                 session.flush()
+#             session.commit()
+#     @staticmethod
+#     def commit():
+#         session.commit()
+#     def __repr__(self):
+#         return 'projectInfo<project={},env={}>'.format(self.project,self.env)
 
 
 def saveProjcetToConsul(pid):
@@ -40,8 +40,10 @@ def saveProjcetToConsul(pid):
     res = BasekitClient.GetProjectInfo(pid)
     print res
     port = 8000+int(pid)
+    projectType = getProjectType(pid)
     projectName = res['name']
     c.kv.put('services/{}/port'.format(projectName),str(port))
+    c.kv.put('services/{}/type'.format(projectName),projectType)
     for environment in res["environment"]:
         for ip in environment["devices"]:
             pstring = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'

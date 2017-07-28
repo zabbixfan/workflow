@@ -12,30 +12,39 @@ from app.models.tickets import Tickets
 @celery.task()
 def createProjectJob(query):
     data = query['data']
-    params = {
-        'search': data['projectGroupName']
-    }
-    r = httpRequset(uri='/api/v4/groups',params=params,url=Config.CODEHUB_URL)
-    if r.json():
-        payload = {
-            'name': data['projectName'],
-            'namespace_id': r.json()[0]['id'],
-            'visibility': 'internal'
+    repoUrl = ''
+    #search repo group
+    if 'createGit' in data.keys():
+        params = {
+            'search': data['projectGroupName']
         }
-        uri = '/api/v4/projects'
-        #create repo
-        r = httpRequset(uri=uri, method="post", data=payload,url=Config.CODEHUB_URL)
-        if r.status_code < 300:
-            id = r.json()["id"]
-            repoUrl = r.json()["http_url_to_repo"]
-            #create file
-            uri = '/api/v4/projects/{}/repository/files/README%2Emd'.format(id)
+        r = httpRequset(uri='/api/v4/groups',params=params,url=Config.CODEHUB_URL)
+        if r.json():
             payload = {
-                'branch': 'master',
-                'content': '',
-                'commit_message': 'init commit'
+                'name': data['projectName'],
+                'namespace_id': r.json()[0]['id'],
+                'visibility': 'internal'
             }
-            httpRequset(uri=uri, method="post", data=payload,url=Config.CODEHUB_URL)
+            uri = '/api/v4/projects'
+            #create repo
+            r = httpRequset(uri=uri, method="post", data=payload,url=Config.CODEHUB_URL)
+            if r.status_code < 300:
+                id = r.json()["id"]
+                repoUrl = r.json()["http_url_to_repo"]
+                #create file
+                uri = '/api/v4/projects/{}/repository/files/README%2Emd'.format(id)
+                payload = {
+                    'branch': 'master',
+                    'content': '',
+                    'commit_message': 'init commit'
+                }
+                httpRequset(uri=uri, method="post", data=payload,url=Config.CODEHUB_URL)
+            else:
+                logger().warn('{}\n{}'.format(query['id'], r.content))
+                return None
+        else:
+            logger().warn('{}\n{}'.format(query['id'], 'codehub group not found'))
+    else:
             #create_cmdb_project
             r = httpRequset(uri='/api/projectgroups')
             if r.status_code < 300:
@@ -84,12 +93,7 @@ def createProjectJob(query):
             else:
                 logger().warn('{}\n{}'.format(query['id'],r.content))
                 return None
-        else:
-            logger().warn('{}\n{}'.format(query['id'], r.content))
-            return None
-    else:
-        logger().warn('{}\n{}'.format(query['id'], 'codehub group not found'))
-        return None
+    return None
 @celery.task()
 def restartProjectJob(query):
     host = Config.WORKFLOW_AGENT_HOST

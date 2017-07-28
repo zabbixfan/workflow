@@ -106,7 +106,6 @@ class newTicket:
 
 class projectTicket(newTicket):
     def dataCheck(self,data):
-        print data
         error = False
         message =''
         params = [

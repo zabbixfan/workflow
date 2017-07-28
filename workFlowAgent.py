@@ -13,7 +13,7 @@ from app.common.ansible_sdk import ansibleRunner
 from app.tasks.mailTask import applyMail
 from app.common.time_helper import current_datetime
 serverPort = Config.WORKFLOW_AGENT_PORT
-allowHost = ['192.168.6.120','192.168.255.1','192.168.99.219']
+allowHost = Config.ALLOW_HOST
 eng = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 Model = declarative_base()
 Session  = sessionmaker(bind=eng)

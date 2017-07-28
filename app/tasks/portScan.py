@@ -1,11 +1,11 @@
 #!coding:utf-8
-# from app.models.projectInfo import ProjectInfo
+import sys,os
+appDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(appDir)
 import socket
-
 import consul
 import time
 from concurrent import futures
-
 from app.common.cacheWithTime import cache
 from config import Config
 

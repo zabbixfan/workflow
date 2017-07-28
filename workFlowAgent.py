@@ -83,9 +83,10 @@ def writeTicketLog(servcie,tid,result):
             if v['stderr']:
                 log.content = "{}:{}".format(servcie,v['stderr'])
                 break
-            if v['stderr_lines']:
-                log.content = "{}:{}".format(servcie,','.join(v['stderr_lines']))
-                break
+            if 'stderr_lines' in v.keys():
+                if `v['stderr_lines']:
+                    log.content = "{}:{}".format(servcie,','.join(v['stderr_lines'][-1]))
+                    break
             if v['stdout_lines']:
                 log.content = "{}:{}".format(servcie,v['stdout_lines'][-1])
             session.add(log)

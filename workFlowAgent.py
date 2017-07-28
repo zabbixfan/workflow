@@ -107,7 +107,7 @@ def restartCommand(task):
         tqm = ansibleRunner(resources)
         tqm.run(host_list=[ip], module_name='shell', module_args=cmd)
         taskResult = tqm.get_result()
-        print taskResult
+        print json.dumps(taskResult,indent=4)
         writeTicketLog(serv,task['id'],taskResult)
         if taskResult['failed'] or taskResult['unreachable']:
             success = False

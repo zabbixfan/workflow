@@ -84,7 +84,7 @@ def writeTicketLog(servcie,tid,result):
                 log.content = "{}:{}".format(servcie,v['stderr'])
                 break
             if 'stderr_lines' in v.keys():
-                if `v['stderr_lines']:
+                if v['stderr_lines']:
                     log.content = "{}:{}".format(servcie,','.join(v['stderr_lines'][-1]))
                     break
             if v['stdout_lines']:

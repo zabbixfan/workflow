@@ -89,8 +89,8 @@ def writeTicketLog(servcie,tid,result):
                     break
             if v['stdout_lines']:
                 log.content = "{}:{}".format(servcie,v['stdout_lines'][-1])
-            session.add(log)
-            session.commit()
+            # session.add(log)
+            # session.commit()
 def restartCommand(task):
     print json.dumps(task,indent=4)
     success = True

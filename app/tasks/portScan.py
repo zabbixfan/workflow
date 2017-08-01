@@ -8,6 +8,8 @@ import time
 from concurrent import futures
 from app.common.cacheWithTime import cache
 from config import Config
+import monitor
+import threading
 
 c = consul.Consul()
 @cache(timeout=3600)
@@ -37,15 +39,17 @@ def singleCheck(service):
     finally:
         s.close()
     status = 1 if res == 'success' else 0
-    #monitor.project_health_check(service[0],service[1],status,service[2],service[3])
+    monitor.project_health_check(service[0],service[1],status,service[2],service[3])
 
-    # t = threading.Thread(target=monitor.project_health_check,args=(service[0],service[1],status,service[2],service[3]))
-    # t.start()
+    #t = threading.Thread(target=monitor.project_health_check,args=(service[0],service[1],status,service[2],service[3]))
+    #t.start()
     return res
 
 def clearCounter(project,env,ip):
     c.kv.put('services/{}/{}/{}/health'.format(project,env,ip),'0')
     c.kv.put('services/{}/{}/{}/unhealth'.format(project, env, ip), '0')
+
+
 def writeToConsul(service):
     res = singleCheck(service)
     if res == "success":

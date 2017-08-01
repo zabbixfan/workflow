@@ -37,9 +37,10 @@ class getServiceByKeyword(Resource):
 
 class syncProjectToConsul(Resource):
     def get(self):
-        import threading
-        t= threading.Thread(target=saveProjects)
-        t.start()
+        # import threading
+        # t= threading.Thread(target=saveProjects)
+        # t.start()
+        saveProjects.delay()
         return ApiResponse('')
 
 

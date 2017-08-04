@@ -166,6 +166,7 @@ class projectTicket(newTicket):
                 owner
                 domainName
                 gitGroup
+                createGit
             }   
          ]
         :return: 
@@ -193,7 +194,7 @@ class projectTicket(newTicket):
             toHander = Config.AUDITORHANDER
             content = {
                 "title": "Workflow工单申请",
-                "content": "<h1>您有一个新的工单待处理，请登录http://workflow.apitops.com查看</h1s>"
+                "content": "<h4>您有一个新的工单待处理，请登录http://workflow.apitops.com查看</h4>"
             }
             applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
         elif self.status == 'Approve':

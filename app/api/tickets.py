@@ -51,13 +51,13 @@ class tickets(Resource):
             ticket = typeDict[ticketType](requestMan=requestMan,name=args.name,status=args.status,types=ticketType,email=email,requestManEng=requestManEng)
             res,status= ticket.apply(args.data)
         return ApiResponse(res,status) if res else ApiResponse(res,status=ResposeStatus.Fail)
-
-    @need_user(roles=["admin"])
-    def put(self):
-        res={}
-        args = audit_args()
-        res,status = auditTicket(id=args.id,status=args.status)
-        return ApiResponse(res,status) if res else ApiResponse(res,status=ResposeStatus.Fail)
+    #
+    # @need_user(roles=["admin"])
+    # def put(self):
+    #     res={}
+    #     args = audit_args()
+    #     res,status = auditTicket(id=args.id,status=args.status)
+    #     return ApiResponse(res,status) if res else ApiResponse(res,status=ResposeStatus.Fail)
 
 
 class ticket(Resource):

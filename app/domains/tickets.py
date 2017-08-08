@@ -229,7 +229,7 @@ class restartTicket(newTicket):
                 logger().error(data)
                 return error,message
         if isinstance(data['restartProject'],list):
-            if len(data['restartProject'])<3:
+            if len(data['restartProject'])<3 or g.user['role'] == 'admin':
                 pass
             else:
                 logger().error(data)

@@ -18,8 +18,9 @@ def post_args(return_parse_args=True):
     rp = reqparse.RequestParser()
     rp.add_argument("name",required=True,nullable=False)
     rp.add_argument("groupType",required=True,nullable=False)
-    rp.add_argument("groupPath",required=True,type=inputs.regex('^[a-zA-Z][a-zA-Z0-9\-]+[a-z0-9]$'))
-    rp.add_argument("members",required=True,default=[],action='append')
+    rp.add_argument("leader",required=True)
+    rp.add_argument("groupPath",required=True)
+    rp.add_argument("members",default=[],action='append')
     return rp.parse_args() if return_parse_args else rp
 
 class projectGroups(Resource):
@@ -29,10 +30,11 @@ class projectGroups(Resource):
         return ApiResponse(projectList())
 
     @swag_from(get_request_parser_doc_dist("add a group", ["projectGroup"], post_args(False)))
-    @need_user()
+    @need_user(roles=['admin'])
     def post(self):
         args = post_args()
-        return ApiResponse(createProjectGroup(name=args.name,groupType=args.groupType,path=args.groupPath,members=args.members))
+        res,status = createProjectGroup(name=args.name,groupType=args.groupType,path=args.groupPath,members=args.members,leader=args.leader)
+        return ApiResponse(res,status)
 
 api.add_resource(projectGroups,'/projectgroups')
 

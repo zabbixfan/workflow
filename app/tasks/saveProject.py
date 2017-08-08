@@ -5,13 +5,12 @@ from zerorpc import Client
 from app.common.cmdb_sdk import getProjectType
 from app.common.httpHelp import httpRequset
 from app import celery
-
+from config import Config
 
 
 def saveProjcetToConsul(pid):
-    BasekitClient = Client(
-        "tcp://192.168.255.170:3200", timeout=3000, passive_heartbeat=True)
     c=consul.Consul()
+    BasekitClient = Client(Config.ONEKIT_RPC, timeout=3000, passive_heartbeat=False)
     res = BasekitClient.GetProjectInfo(pid)
     print res
     port = 8000+int(pid)

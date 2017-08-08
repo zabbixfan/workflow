@@ -11,7 +11,6 @@ import config
 celery = Celery(__name__,broker=config.Config.CELERY_BROKER_URL)
 db = SQLAlchemy()
 
-
 def logger_init(name="root"):
     """
     log 初始化

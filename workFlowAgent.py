@@ -164,7 +164,6 @@ def scanSingleHost(ip):
     return res
 
 def syncSingleHost(data):
-    print data
     ip = data['ip']
     system = data['system']
     if system =='win':
@@ -181,17 +180,22 @@ def syncSingleHost(data):
             server.expired_time = strtime_to_datetime("2099-12-30T23:59Z", "%Y-%m-%dT%H:%MZ")
             server.save()
             print 'add server {} success'.format(ip)
-
+    if system == 'linux':
+        resources = [{"hostname": ip, "username": "root"}]
+        tqm = ansibleRunner(resources)
+        tqm.run(host_list=[ip], module_name='setup', module_args='')
+        taskResult = tqm.get_result()
+        print taskResult
 
 def scanInternal():
     ips = ["192.168.100.{}".format(ip) for ip in range(1,255)]
     with futures.ThreadPoolExecutor(max_workers=50) as excutor:
         excutor.map(scanSingleHost,ips)
-    print hostList
     for host in hostList:
         syncSingleHost(host)
-    # with futures.ThreadPoolExecutor(max_workers=50) as excutor:
+    # with futures.ThreadPoolExecutor(max_workers=2) as excutor:
     #     excutor.map(syncSingleHost,hostList)
+    print "success"
 def workFunction(sock,addr):
     if addr[0] not in allowHost:
         sock.sendall("not allow")

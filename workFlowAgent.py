@@ -3,6 +3,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 import socket,threading,logging,json,os,jinja2,re
+from concurrent import futures
 from config import Config
 from sqlalchemy import create_engine
 from sqlalchemy import Column,String,DATETIME,Integer
@@ -11,13 +12,17 @@ from sqlalchemy.orm import sessionmaker
 from app.common.httpHelp import httpRequset
 from app.common.ansible_sdk import ansibleRunner
 from app.tasks.mailTask import applyMail
-from app.common.time_helper import current_datetime
+from app.common.time_helper import current_datetime,strtime_to_datetime
+from app.models.servers import *
 serverPort = Config.WORKFLOW_AGENT_PORT
 allowHost = Config.ALLOW_HOST
 eng = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 Model = declarative_base()
 Session  = sessionmaker(bind=eng)
 session = Session()
+
+hostList = []
+
 class Tickets(Model):
     __tablename__= "workflow_list"
     id = Column(String(255),primary_key=True)
@@ -62,6 +67,7 @@ logging.basicConfig(
     filename="app.log",
     filemode="a+"
 )
+
 def getProjectType(projectName):
     res = httpRequset(url=Config.CMDB_URL,uri='/api/projects')
     for project in res.json()['data']:
@@ -136,6 +142,56 @@ def restartCommand(task):
         }
         applyMail(toUser=toUser, toHander=toHander, mailArgs=content)
 
+def scanSingleHost(ip):
+    s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    s.settimeout(Config.SOCKET_TIMEOUT)
+    try:
+        s.connect((ip,22))
+        hostList.append({
+            'ip':ip,
+            'system': 'linux'
+        })
+        res = 'success'
+    except Exception,e:
+        res = 'failed'
+        if str(e).endswith('Connection refused'):
+            hostList.append({
+            'ip':ip,
+            'system': 'win'
+            })
+    finally:
+        s.close()
+    return res
+
+def syncSingleHost(data):
+    print data
+    ip = data['ip']
+    system = data['system']
+    if system =='win':
+        server = cmdbSession.query(Server).filter(Server.internal_ip==ip).first()
+        if not server:
+            server = Server()
+            server.internal_ip = ip
+            server.status = ServerStatus.Running
+            server.idc = IdcCode.internal
+            server.idc_zone = 'hangzhou'
+            server.os_platform = 'Windows Server 2008'
+            server.os_name = 'Windows Server  2008 R2 企业版 64位中文版'
+            server.creation_time = current_datetime()
+            server.expired_time = strtime_to_datetime("2099-12-30T23:59Z", "%Y-%m-%dT%H:%MZ")
+            server.save()
+            print 'add server {} success'.format(ip)
+
+
+def scanInternal():
+    ips = ["192.168.100.{}".format(ip) for ip in range(1,255)]
+    with futures.ThreadPoolExecutor(max_workers=50) as excutor:
+        excutor.map(scanSingleHost,ips)
+    print hostList
+    for host in hostList:
+        syncSingleHost(host)
+    # with futures.ThreadPoolExecutor(max_workers=50) as excutor:
+    #     excutor.map(syncSingleHost,hostList)
 def workFunction(sock,addr):
     if addr[0] not in allowHost:
         sock.sendall("not allow")
@@ -154,6 +210,8 @@ def workFunction(sock,addr):
         task = json.loads(data)
         if task["type"] == 'restartProject':
             restartCommand(task)
+        if task["type"] == 'scanInternalDataCenter':
+            scanInternal()
 
 
 def agent():

@@ -197,7 +197,7 @@ def syncSingleHost(data):
                                for i in hostInfo["ansible_devices"] if i[0:2] in ("sd", "ss","xv")])
     server.expired_time = strtime_to_datetime("2099-12-30T23:59Z", "%Y-%m-%dT%H:%MZ")
     server.save()
-    print 'sync server {} success'.format(ip)
+    # print 'sync server {} success'.format(ip)
 def scanInternal():
     ips = ["192.168.100.{}".format(ip) for ip in range(2,255)]
     with futures.ThreadPoolExecutor(max_workers=50) as excutor:
@@ -212,6 +212,7 @@ def scanInternal():
                 server.expired_time = datetime.datetime.now()
             if (datetime.datetime.now() - datetime.timedelta(days=5)) > server.expired_time:
                 server.status = ServerStatus.Deleted
+                logging.warn("delete {}".format(server.internal_ip))
             server.commit()
     # with futures.ThreadPoolExecutor(max_workers=2) as excutor:
     #     excutor.map(syncSingleHost,hostList)

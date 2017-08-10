@@ -14,6 +14,7 @@ from app.common.ansible_sdk import ansibleRunner
 from app.tasks.mailTask import applyMail
 from app.common.time_helper import current_datetime,strtime_to_datetime
 from app.models.servers import *
+import datetime
 serverPort = Config.WORKFLOW_AGENT_PORT
 allowHost = Config.ALLOW_HOST
 eng = create_engine(Config.SQLALCHEMY_DATABASE_URI)
@@ -166,36 +167,54 @@ def scanSingleHost(ip):
 def syncSingleHost(data):
     ip = data['ip']
     system = data['system']
+    server = cmdbSession.query(Server).filter(Server.internal_ip==ip).first()
+    if not server:
+        server = Server()
+        server.internal_ip = ip
+        server.status = ServerStatus.Running
+        server.idc = IdcCode.internal
+        server.idc_zone = 'hangzhou'
+        server.creation_time = current_datetime()
     if system =='win':
-        server = cmdbSession.query(Server).filter(Server.internal_ip==ip).first()
-        if not server:
-            server = Server()
-            server.internal_ip = ip
-            server.status = ServerStatus.Running
-            server.idc = IdcCode.internal
-            server.idc_zone = 'hangzhou'
-            server.os_platform = 'Windows Server 2008'
-            server.os_name = 'Windows Server  2008 R2 企业版 64位中文版'
-            server.creation_time = current_datetime()
-            server.expired_time = strtime_to_datetime("2099-12-30T23:59Z", "%Y-%m-%dT%H:%MZ")
-            server.save()
-            print 'add server {} success'.format(ip)
+        server.os_platform = 'Windows Server 2008'
+        server.os_name = 'Windows Server  2008 R2 企业版 64位中文版'
     if system == 'linux':
+        server.os_platform = 'CentOS'
+        server.os_name = 'CentOS  7.0 64位'
         resources = [{"hostname": ip, "username": "root"}]
         tqm = ansibleRunner(resources)
         tqm.run(host_list=[ip], module_name='setup', module_args='')
         taskResult = tqm.get_result()
-        print taskResult
-
+        if taskResult['success']:
+            hostInfo = taskResult['success'][ip]['ansible_facts']
+            server.os_platform = hostInfo['ansible_distribution']
+            server.os_name = '{} {}'.format(hostInfo['ansible_distribution'],hostInfo['ansible_distribution_version']).lower()
+            server.host_name = hostInfo['ansible_hostname']
+            server.cpu = hostInfo['ansible_processor_count']
+            server.memory = hostInfo['ansible_memtotal_mb']
+            server.disk = sum([int(hostInfo["ansible_devices"][i]["sectors"]) * \
+                               int(hostInfo["ansible_devices"][i]["sectorsize"]) / 1024 / 1024 / 1024 \
+                               for i in hostInfo["ansible_devices"] if i[0:2] in ("sd", "ss","xv")])
+    server.expired_time = strtime_to_datetime("2099-12-30T23:59Z", "%Y-%m-%dT%H:%MZ")
+    server.save()
+    print 'sync server {} success'.format(ip)
 def scanInternal():
-    ips = ["192.168.100.{}".format(ip) for ip in range(1,255)]
+    ips = ["192.168.100.{}".format(ip) for ip in range(2,255)]
     with futures.ThreadPoolExecutor(max_workers=50) as excutor:
         excutor.map(scanSingleHost,ips)
     for host in hostList:
         syncSingleHost(host)
+    #修改不存在的机器状态
+    servers = cmdbSession.query(Server).filter(Server.idc==IdcCode.internal).all()
+    for server in servers:
+        if not server.internal_ip in ips:
+            if server.expired_time > datetime.datetime.now():
+                server.expired_time = datetime.datetime.now()
+            if (datetime.datetime.now() - datetime.timedelta(days=5)) > server.expired_time:
+                server.status = ServerStatus.Deleted
+            server.commit()
     # with futures.ThreadPoolExecutor(max_workers=2) as excutor:
     #     excutor.map(syncSingleHost,hostList)
-    print "success"
 def workFunction(sock,addr):
     if addr[0] not in allowHost:
         sock.sendall("not allow")

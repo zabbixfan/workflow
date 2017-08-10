@@ -52,7 +52,6 @@ class Server(Model):
     def save(self, wait_commit=False):
         if not self.server_id:
             self.server_id = uuid().get_hex()
-
         cmdbSession.add(self)
         if wait_commit:
             cmdbSession.flush()

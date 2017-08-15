@@ -63,7 +63,7 @@ class TicketLog(Model):
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s - %(message)s",
     filename="app.log",
     filemode="a+"
@@ -136,12 +136,8 @@ def restartCommand(task):
         logging.warn(task['email'])
         logging.warn(",".join(toUser))
         if task['email'] not in toUser:
-            # toUser = Config.AUDITOR
-            # toHander = Config.AUDITORHANDER
             toUser = Config.AUDITOR + [task['email']]
             toHander = Config.AUDITORHANDER + [(task['requestMan'], task['email'])]
-            # toUser.append(task['email'])
-            # toHander.append((task['requestMan'], task['email']))
         logging.warn(",".join(toUser))
         content = {
             "title": "Workflow工单申请",

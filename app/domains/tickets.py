@@ -81,7 +81,7 @@ def auditTicket(id,status):
         jobDict[q.type].delay(query)
     return "audit ticket success",ResposeStatus.Success
 class newTicket:
-    def __init__(self,requestMan,name,status,types,id=None,email=None,requestManEng=None):
+    def __init__(self,name,status,types,id=None,email=None,requestManEng=None,requestMan=None):
         self.requestMan = requestMan
         self.id = uuid().get_hex()
         if id:
@@ -179,8 +179,10 @@ class projectTicket(newTicket):
             if not ticket:
                 ticket = Tickets()
                 ticket.createTime = datetime.now()
-            ticket.requestMan = self.requestMan
-            ticket.requestManEng = self.requestManEng
+            if self.requestMan:
+                ticket.requestMan = self.requestMan
+            if self.requestManEng:
+                ticket.requestManEng = self.requestManEng
             ticket.name = self.name
             ticket.status = self.status
             ticket.type = self.type
@@ -263,8 +265,10 @@ class restartTicket(newTicket):
             if not ticket:
                 ticket = Tickets()
                 ticket.createTime = datetime.now()
-            ticket.requestMan = self.requestMan
-            ticket.requestManEng = self.requestManEng
+            if self.requestMan:
+                ticket.requestMan = self.requestMan
+            if self.requestManEng:
+                ticket.requestManEng = self.requestManEng
             ticket.name = self.name
             ticket.status = self.status
             ticket.type = self.type

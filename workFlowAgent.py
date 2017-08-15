@@ -137,6 +137,8 @@ def restartCommand(task):
         logging.warn(task['email'])
         logging.warn(",".join(toUser))
         if task['email'] not in toUser:
+            toUser = Config.AUDITOR
+            toHander = Config.AUDITORHANDER
             toUser.append(task['email'])
             toHander.append((task['requestMan'], task['email']))
         logging.warn(",".join(toUser))

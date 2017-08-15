@@ -11,7 +11,7 @@ from .mailTask import applyMail
 from app.models.tickets import Tickets
 @celery.task()
 def createProjectJob(query):
-    print json.dump(query,indent=4)
+    print json.dumps(query,indent=4)
     data = query['data']
     repoUrl = ''
     #search repo group

@@ -67,8 +67,9 @@ class ticket(Resource):
         args = post_args()
         ticketType = args.ticketType
         requestMan = g.user["name"]
+        requestManEng = g.user["loginName"]
         if ticketType in typeDict.keys():
-            ticket = typeDict[ticketType](requestMan=requestMan,name=args.name,status=args.status,types=ticketType,id=id)
+            ticket = typeDict[ticketType](requestMan=requestMan,name=args.name,status=args.status,types=ticketType,id=id,requestManEng=requestManEng)
             res,status= ticket.apply(args.data)
         return ApiResponse(res,status) if res else ApiResponse(res,status=ResposeStatus.Fail)
     @need_user()

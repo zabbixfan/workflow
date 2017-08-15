@@ -17,7 +17,7 @@ from app.models.servers import *
 import datetime
 serverPort = Config.WORKFLOW_AGENT_PORT
 allowHost = Config.ALLOW_HOST
-eng = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+eng = create_engine(Config.SQLALCHEMY_DATABASE_URI,pool_recycle=300)
 Model = declarative_base()
 Session  = sessionmaker(bind=eng)
 session = Session()
@@ -115,7 +115,7 @@ def restartCommand(task):
         tqm = ansibleRunner(resources)
         tqm.run(host_list=[ip], module_name='shell', module_args=cmd)
         taskResult = tqm.get_result()
-        print json.dumps(taskResult,indent=4)
+        logging.warn(json.dumps(taskResult,indent=4))
         writeTicketLog(serv,task['id'],taskResult)
         if taskResult['failed'] or taskResult['unreachable']:
             success = False
@@ -132,11 +132,12 @@ def restartCommand(task):
         q.commit()
         toUser = Config.AUDITOR
         toHander = Config.AUDITORHANDER
-        print task['email']
-        print toUser
+        logging.warn(task['email'])
+        logging.warn(",".join(toUser))
         if task['email'] not in toUser:
             toUser.append(task['email'])
             toHander.append((task['requestMan'], task['email']))
+        logging.warn(",".join(toUser))
         content = {
             "title": "Workflow工单申请",
             "content": "<p>您的工单{}已完成，服务已重启,请登录workflow查看重启结果<p>".format(task['name'])

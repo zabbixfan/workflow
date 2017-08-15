@@ -100,7 +100,7 @@ def writeTicketLog(servcie,tid,result):
             session.commit()
             session.close()
 def restartCommand(task):
-    print json.dumps(task,indent=4)
+    logging.warn(json.dumps(task,indent=4))
     success = True
     for serv in task['data']['restartProject']:
         name,env,ip = serv.split('/')
@@ -124,7 +124,6 @@ def restartCommand(task):
         else:
             status = taskResult['success'][ip]['stdout_lines']
             pattern = re.compile(r'is\srunning\swith\spid\:\s\d+')
-            print pattern.search(status[-1])
             if not pattern.search(status[-1]):
                 success = False
                 logging.error("{}:{}".format(task['id'],taskResult['success'][ip]))

@@ -17,7 +17,7 @@ from app.models.servers import *
 import datetime
 serverPort = Config.WORKFLOW_AGENT_PORT
 allowHost = Config.ALLOW_HOST
-eng = create_engine(Config.SQLALCHEMY_DATABASE_URI,pool_recycle=300)
+eng = create_engine(Config.SQLALCHEMY_DATABASE_URI,pool_recycle=55)
 Model = declarative_base()
 Session  = sessionmaker(bind=eng)
 session = Session()
@@ -98,6 +98,7 @@ def writeTicketLog(servcie,tid,result):
                 log.content = "{}:{}".format(servcie,v['stdout_lines'][-1])
             session.add(log)
             session.commit()
+            session.close()
 def restartCommand(task):
     print json.dumps(task,indent=4)
     success = True
@@ -123,6 +124,7 @@ def restartCommand(task):
         else:
             status = taskResult['success'][ip]['stdout_lines']
             pattern = re.compile(r'is\srunning\swith\spid\:\s\d+')
+            print pattern.search(status[-1])
             if not pattern.search(status[-1]):
                 success = False
                 logging.error("{}:{}".format(task['id'],taskResult['success'][ip]))

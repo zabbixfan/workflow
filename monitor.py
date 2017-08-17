@@ -16,7 +16,7 @@ def project_health_check(project,env,status,ip_addr,port):
         "endpoint": "%s" % ip_addr,
         "metric": 'project_health_check',
         "timestamp": ts,
-        "step": 10,
+        "step": 60,
         "value": status,
         "counterType": "GAUGE",
         "tags": "env=%s,project=%s,port=%s," % (env,project,port),

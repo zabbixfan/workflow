@@ -75,7 +75,7 @@ def getProjectType(projectName):
         if project['name'] == projectName:
             return project['type']
     else:
-        return "tomcat"
+        return "Java:War"
 
 def writeTicketLog(servcie,tid,result):
     log = TicketLog()

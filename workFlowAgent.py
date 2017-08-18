@@ -23,7 +23,6 @@ Session  = sessionmaker(bind=eng)
 session = Session()
 
 
-servers = []
 class Tickets(Model):
     __tablename__= "workflow_list"
     id = Column(String(255),primary_key=True)
@@ -166,10 +165,9 @@ def scanSingleHost(ip,hostList):
         s.close()
     return res
 
-def syncSingleHost(data):
+def syncSingleHost(data,servers):
     ip = data['ip']
     system = data['system']
-    # server = cmdbSession.query(Server).filter(Server.internal_ip==ip).first()
     if system == "win":
         server = {
             'system':'win',
@@ -178,9 +176,7 @@ def syncSingleHost(data):
     if system == 'linux':
         server = {
             'system': 'linux',
-            'ip': ip,
-            # 'os_platform': 'CentOS',
-            # 'os_name': 'CentOS  7.0 64位'
+            'ip': ip
         }
         resources = [{"hostname": ip, "username": "root"}]
         tqm = ansibleRunner(resources)
@@ -199,39 +195,8 @@ def syncSingleHost(data):
                                for i in hostInfo["ansible_devices"] if i[0:2] in ("sd", "ss","xv")])
         else:
             server['taskResult'] = 'failed'
-    # print server
     servers.append(server)
-    # if not server:
-    #     server = Server()
-    #     server.internal_ip = ip
-    #     server.status = ServerStatus.Running
-    #     server.idc = IdcCode.internal
-    #     server.idc_zone = 'hangzhou'
-    #     server.creation_time = current_datetime()
-    #
-    # if system =='win':
-    #     server.os_platform = 'Windows Server 2008'
-    #     server.os_name = 'Windows Server  2008 R2 企业版 64位中文版'
-    # if system == 'linux':
-    #     server.os_platform = 'CentOS'
-    #     server.os_name = 'CentOS  7.0 64位'
-    #     resources = [{"hostname": ip, "username": "root"}]
-    #     tqm = ansibleRunner(resources)
-    #     tqm.run(host_list=[ip], module_name='setup', module_args='')
-    #     taskResult = tqm.get_result()
-    #     if taskResult['success']:
-    #         hostInfo = taskResult['success'][ip]['ansible_facts']
-    #         server.os_platform = hostInfo['ansible_distribution']
-    #         server.os_name = '{} {}'.format(hostInfo['ansible_distribution'],hostInfo['ansible_distribution_version']).lower()
-    #         server.host_name = hostInfo['ansible_hostname']
-    #         server.cpu = hostInfo['ansible_processor_count']
-    #         server.memory = hostInfo['ansible_memtotal_mb']
-    #         server.disk = sum([int(hostInfo["ansible_devices"][i]["sectors"]) * \
-    #                            int(hostInfo["ansible_devices"][i]["sectorsize"]) / 1024 / 1024 / 1024 \
-    #                            for i in hostInfo["ansible_devices"] if i[0:2] in ("sd", "ss","xv")])
-    # server.expired_time = strtime_to_datetime("2099-12-30T23:59Z", "%Y-%m-%dT%H:%MZ")
-    # server.save()
-    # print 'sync server {} success'.format(ip)
+
 def scanInternal():
     ips = ["192.168.100.{}".format(ip) for ip in range(2,255)]
     hostList=[]
@@ -242,28 +207,17 @@ def scanInternal():
         # print future.result()
         # excutor.map(scanSingleHost,ips)
     print len(hostList)
-    # return {'aliveHost': hostList}
+    servers=[]
     for host in hostList:
         print host['ip']
-        syncSingleHost(host)
-    result = {
+        syncSingleHost(host,servers)
+    print len(servers)
+    # print json.dumps({'hostInfo': servers},indent=4)
+    return {
         'aliveHost': hostList,
         'hostInfo': servers
     }
-    print type(result)
-    return result
-    #修改不存在的机器状态
-    # servers = cmdbSession.query(Server).filter(Server.idc==IdcCode.internal).all()
-    # for server in servers:
-    #     if not server.internal_ip in ips:
-    #         if server.expired_time > datetime.datetime.now():
-    #             server.expired_time = datetime.datetime.now()
-    #         if (datetime.datetime.now() - datetime.timedelta(days=5)) > server.expired_time:
-    #             server.status = ServerStatus.Deleted
-    #             logging.warn("delete {}".format(server.internal_ip))
-    #         server.commit()
-    # with futures.ThreadPoolExecutor(max_workers=2) as excutor:
-    #     excutor.map(syncSingleHost,hostList)
+    # return {'hostInfo': servers}
 def workFunction(sock,addr):
     if addr[0] not in allowHost:
         sock.sendall("not allow")
@@ -275,7 +229,7 @@ def workFunction(sock,addr):
             task = json.loads(data)
             if task["type"] == 'scanInternalDataCenter':
                 res=scanInternal()
-                sock.send(json.dumps(res))
+                sock.sendall(json.dumps(res))
                 sock.close()
             else:
                 sock.send('recevie data complete')

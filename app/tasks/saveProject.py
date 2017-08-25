@@ -12,7 +12,6 @@ def saveProjcetToConsul(pid):
     c=consul.Consul()
     BasekitClient = Client(Config.ONEKIT_RPC, timeout=3000, passive_heartbeat=False)
     res = BasekitClient.GetProjectInfo(pid)
-    print res
     port = 8000+int(pid)
     projectType = getProjectType(pid)
     projectName = res['name']

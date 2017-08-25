@@ -65,11 +65,11 @@ def createProjectJob(query):
             if r.status_code < 300:
                 projectId = r.json()['data']['id']
                 # create_domainName
-                domainName = data['domainName']
-                if domainName:
-                    uri = '/api/dnsbatch/{}'.format(domainName)
-                    r = httpRequset(uri=uri,url=Config.PACIFIC_URL,method='post')
-                    logger().warn('{}\n{}'.format(query['id'], r.content))
+                # domainName = data['domainName']
+                # if domainName:
+                #     uri = '/api/dnsbatch/{}'.format(domainName)
+                #     r = httpRequset(uri=uri,url=Config.PACIFIC_URL,method='post')
+                #     logger().warn('{}\n{}'.format(query['id'], r.content))
                 q = Tickets.query.filter(Tickets.id==query['id']).first()
                 q.status = 'Complete'
                 q.commit()

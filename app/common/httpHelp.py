@@ -1,7 +1,7 @@
 from .alopex_auth_sdk import SignatureGeneration
 from config import Config
 import requests
-def httpRequset(uri,method='get',url=None,headers=None,params=None,data=None,secret_key=""):
+def httpRequset(uri,url=None,method='get',headers=None,params=None,data=None,secret_key=""):
     if url is None:
         url = Config.CMDB_URL
     fullurl = url + uri

@@ -25,7 +25,7 @@ def saveProjcetToConsul(pid):
             match = pattern.search(ip["name"])
             ip = str(match.group())
             # for key in ['status','unhealth','health']:
-            c.kv.put('services/{}/{}/{}/status'.format(projectName,environment['envFlag'],ip),'')
+            c.kv.put('services/{}/{}/{}/status'.format(projectName,environment['envFlag'],ip),'ok')
             c.kv.put('services/{}/{}/{}/isCheck'.format(projectName,environment['envFlag'],ip),'True')
         if not environment["devices"]:
             c.kv.put('services/{}/{}'.format(projectName,environment['envFlag']),'')
@@ -33,6 +33,8 @@ def saveProjcetToConsul(pid):
 
 @celery.task()
 def saveProjects():
+    c=consul.Consul()
+    c.kv.delete('services/',recurse=True)
     r = httpRequset(uri='/api/projects')
     projects = r.json()['data']
     for project in projects:

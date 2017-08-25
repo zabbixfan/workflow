@@ -217,7 +217,6 @@ def scanInternal():
         'aliveHost': hostList,
         'hostInfo': servers
     }
-    # return {'hostInfo': servers}
 def workFunction(sock,addr):
     if addr[0] not in allowHost:
         sock.sendall("not allow")

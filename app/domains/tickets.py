@@ -128,14 +128,14 @@ class projectTicket(newTicket):
             {
                 'name': 'owner',
                 'rule': ''
-            },
-            {
-                'name': 'domainName',
-                'rule': r'(^$|^[\d\w\.\-]+$)'
             }
+            # {
+            #     'name': 'domainName',
+            #     'rule': r'(^$|^[\d\w\.\-]+$)'
+            # }
         ]
         for param in params:
-            if param['name'] not in data.keys():
+            if not param['name']  in data.keys():
                 error = True
                 message = 'param {} not found'.format(param['name'])
                 logger().error(data)

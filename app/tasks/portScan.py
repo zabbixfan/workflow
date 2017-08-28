@@ -12,7 +12,7 @@ import monitor
 import threading
 
 c = consul.Consul()
-@cache(timeout=3600)
+# @cache(timeout=3600)
 def getInfo():
     _,services = c.kv.get('services/',recurse=True)
     projects = []

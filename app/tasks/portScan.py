@@ -81,20 +81,20 @@ def writeToConsul(service):
 def checkServices():
     services = getInfo()
     worker = min(Config.SCAN_WORKER,len(services))
-    print worker
     with futures.ThreadPoolExecutor(max_workers=worker) as excutor:
         res = excutor.map(writeToConsul,services)
-    return {}
-
+    # print services
     # for service in services:
     #     writeToConsul(service)
+    return {}
 
 
 
 while True:
     start = time.time()
     checkServices()
-    print time.time() - start
+    costTime=time.time() - start
+    print costTime
     time.sleep(Config.INTERVAL)
     # event.wait(3)
 

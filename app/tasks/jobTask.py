@@ -76,12 +76,9 @@ def createProjectJob(query):
                 toUser = Config.AUDITOR
                 toHander = Config.AUDITORHANDER
                 print query['email']
-                print toUser
                 if query['email'] not in toUser:
                     toUser = Config.AUDITOR + [query['email']]
                     toHander = Config.AUDITORHANDER + [(query['requestMan'], query['email'])]
-                    # toUser.append(query['email'])
-                    # toHander.append((query['requestMan'], query['email']))
                 content = {
                     "title": "Workflow工单申请",
                     "content": "<h4>您有一个新的工单已完成，工程名称：{}，ID为：{}，代码仓库地址为：{}</h4>".format(data['projectName'],projectId,repoUrl)

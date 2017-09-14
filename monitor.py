@@ -22,6 +22,7 @@ def project_health_check(project,env,status,ip_addr,port):
         "tags": "env=%s,project=%s,port=%s," % (env,project,port),
     }
     ]
-
-    r = requests.post(Config.OPEN_FALCON_AGENT_URL, data=json.dumps(payload))
-
+    try:
+        requests.post(Config.OPEN_FALCON_AGENT_URL, data=json.dumps(payload),timeout=1)
+    except Exception,e:
+        pass

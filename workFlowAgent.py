@@ -13,7 +13,6 @@ from app.common.httpHelp import httpRequset
 from app.common.ansible_sdk import ansibleRunner
 from app.tasks.mailTask import applyMail
 from app.common.time_helper import current_datetime,strtime_to_datetime
-from app.models.servers import *
 import datetime
 serverPort = Config.WORKFLOW_AGENT_PORT
 allowHost = Config.ALLOW_HOST

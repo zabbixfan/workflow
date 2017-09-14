@@ -9,6 +9,7 @@ from app import logger
 from config import Config
 from .mailTask import applyMail
 from app.models.tickets import Tickets
+from app.models.ipPool import ipPool
 @celery.task()
 def createProjectJob(query):
     print json.dumps(query,indent=4)
@@ -95,6 +96,43 @@ def createProjectJob(query):
         logger().warn('{}\n{}'.format(query['id'],r.content))
         return None
     return None
+
+@celery.task()
+def createKvmVmJob(query,backEndCreate=False,manager=''):
+    data = query['data']
+    servers=ipPool.query.filter(ipPool.status=='unUsed').all()
+    servers.sort(lambda x, y: cmp(''.join([i.rjust(3, '0') for i in x.ip.split('.')]),
+                                ''.join([i.rjust(3, '0') for i in y.ip.split('.')])))
+    for server in servers[:data['vmInstances']]:
+        server.status='locking'
+        if manager:
+            server.manager=manager
+        server.commit()
+        params = {
+            'search': data['projectGroupName']
+        }
+        r = httpRequset(uri='/api/v4/groups', params=params, url=Config.CODEHUB_URL)
+        groupName=r.json()[0]['path']
+        if backEndCreate:
+            callBack = Config.WEBHOOK_URL + '/api/webhook/999'
+        else:
+            callBack = Config.WEBHOOK_URL + '/api/webhook/' + query['id']
+        requestBody = {
+            'playBookName': 'kvmmanager',
+            'action': 'createVm',
+            'callBack': callBack,
+            'params': {
+                'vmMEM': data['vmMEM'],
+                'vmCPU': data['vmCPU'],
+                'vmName': '{}-{}-{}'.format(groupName,data['projectEnv'],'.'.join(server.ip.split('.')[-2:])),
+                'env': data['projectEnv'],
+                'vmIP': server.ip
+            }
+        }
+        print json.dumps(requestBody,indent=4)
+        r=httpRequset(url=Config.ANSIBLE_WORK_URL,uri='/api/ansiblepb',jsons=requestBody,method='post')
+        print json.dumps(r.json(),indent=4)
+    return None
 @celery.task()
 def restartProjectJob(query):
     host = Config.WORKFLOW_AGENT_HOST
@@ -110,3 +148,19 @@ def restartProjectJob(query):
         logger().error('{}:{}:{},{}'.format(query['id'],host,port,str(e)))
     s.close()
     return None
+
+@celery.task()
+def operateKvmVmJob(name,ip,action):
+    callBack = Config.WEBHOOK_URL + '/api/webhook/999'
+    requestBody = {
+        'playBookName': 'kvmmanager',
+        'action': action,
+        'callBack': callBack,
+        'params': {
+            'vmName': name,
+            'vmIP': ip
+        }
+    }
+    r = httpRequset(url=Config.ANSIBLE_WORK_URL, uri='/api/ansiblepb', jsons=requestBody, method='post')
+    print r.content
+    pass

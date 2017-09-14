@@ -12,15 +12,12 @@ class TicketLog(db.Model):
     time = db.Column(db.DATETIME)
     action = db.Column(db.String(255),default="")
     content = db.Column(db.String(1000),default="")
+
     def save(self,wait_commit=False):
-        if not self.id:
-            self.id=uuid().get_hex()
-            db.session.add(self)
-            if wait_commit:
-                db.session.flush()
+        db.session.add(self)
+        if wait_commit:
+            db.session.flush()
         else:
-            if wait_commit:
-                db.session.flush()
             db.session.commit()
     @staticmethod
     def commit():

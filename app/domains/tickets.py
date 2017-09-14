@@ -12,7 +12,7 @@ from uuid import uuid1 as uuid
 from datetime import datetime
 from config import Config
 from app.tasks.mailTask import applyMail
-from app.tasks.jobTask import createProjectJob,restartProjectJob
+from app.tasks.jobTask import createProjectJob,restartProjectJob,createKvmVmJob
 def ticketList(keyword=None,offset=0,limit=20,type=None,status=None):
     userinfo = g.user
     role = userinfo.get("role","")
@@ -64,22 +64,22 @@ def deleteTicketInfo(id):
         q.commit()
         return "delete ticket success"
 
-def auditTicket(id,status):
-    q = Tickets.query.filter(Tickets.id==id).first()
-    if q:
-        q.status = status
-        q.commit()
-    if status == 'Approve':
-        query = {
-            'id':q.id,
-            'status': q.status,
-            'data': json.loads(q.data),
-            'requestMan': q.requestMan,
-            'email': q.email,
-            'type': q.type
-        }
-        jobDict[q.type].delay(query)
-    return "audit ticket success",ResposeStatus.Success
+# def auditTicket(id,status):
+#     q = Tickets.query.filter(Tickets.id==id).first()
+#     if q:
+#         q.status = status
+#         q.commit()
+#     if status == 'Approve':
+#         query = {
+#             'id':q.id,
+#             'status': q.status,
+#             'data': json.loads(q.data),
+#             'requestMan': q.requestMan,
+#             'email': q.email,
+#             'type': q.type
+#         }
+#         jobDict[q.type].delay(query)
+#     return "audit ticket success",ResposeStatus.Success
 class newTicket:
     def __init__(self,name,status,types,id=None,email=None,requestManEng=None,requestMan=None):
         self.requestMan = requestMan
@@ -101,7 +101,6 @@ class newTicket:
             'type': ticket.type,
             'name': ticket.name
         }
-        # print json.dumps(data,indent=4)
         jobDict[ticket.type].delay(data)
 
 class projectTicket(newTicket):
@@ -196,7 +195,7 @@ class projectTicket(newTicket):
             toHander = Config.AUDITORHANDER
             content = {
                 "title": "Workflow工单申请",
-                "content": "<h4>您有一个新的工单待处理，请登录http://workflow.apitops.com查看</h4>"
+                "content": "<p>您有一个新的工单待处理，请登录<a><href='http://workflow.apitops.com'>http://workflow.apitops.com</a></p><p>查看</p>"
             }
             applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
         elif self.status == 'Approve':
@@ -282,7 +281,7 @@ class restartTicket(newTicket):
             toHander = Config.AUDITORHANDER
             content = {
                 "title": "Workflow工单申请",
-                "content": "<h1>您有一个新的工单待处理，请登录http://workflow.apitops.com查看</h1s>"
+                "content": "<p>您有一个新的工单待处理，请登录<a><href='http://workflow.apitops.com'>http://workflow.apitops.com</a></p><p>查看</p>"
             }
             applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
         if self.status == 'Approve':
@@ -299,11 +298,138 @@ class restartTicket(newTicket):
                 'name': self.name,
                 'status': self.status
         },ResposeStatus.Success
+
+class createKvmVmTicket(newTicket):
+    def dataCheck(self,data):
+        error = False
+        message =''
+        params = [
+            {
+                'name': 'projectGroupName',
+                'rule': ''
+            },
+            {
+                'name': 'projectEnv',
+                'rule': ''
+            },
+            {
+                'name': 'vmMEM',
+                'rule': ''
+            },
+            {
+                'name': 'vmCPU',
+                'rule': ''
+            },
+            {
+                'name': 'vmInstances',
+                'rule': ''
+            }
+        ]
+        for param in params:
+            if not param['name'] in data.keys():
+                error = True
+                message = 'param {} not found'.format(param['name'])
+                logger().error(data)
+                return error,message
+            elif not param['name']:
+                error = True
+                message = 'param {} can\'t be none'.format(param['name'])
+                logger().error(data)
+                return error,message
+            if param.has_key('rule'):
+                if param['rule']:
+                    pattern = re.compile(param['rule'])
+                    if not pattern.match(data[param['name']]):
+                        logger().error(data)
+                        error = True
+                        message = 'param {} value does not match pattern:{}'.format(param['name'],param['rule'])
+                        return error,message
+            if g.user['role'] != 'admin':
+                if param['name'] == 'vmCPU':
+                    e,m = self.minAndMax(1,5,data[param['name']],param['name'],data)
+                    if e is True:
+                        return e,m
+                if param['name'] == 'vmMEM':
+                    e,m = self.minAndMax(1,16001,data[param['name']],param['name'],data)
+                    if e is True:
+                        return e,m
+                if param['name'] == 'vmInstances':
+                    e,m = self.minAndMax(1,5,data[param['name']],param['name'],data)
+                    if e is True:
+                        return e,m
+        return error,message
+
+    def minAndMax(self,min,max,value,name,data):
+        er=False
+        if not value in range(min,max):
+            logger().error(data)
+            er = True
+            mes = 'param {} not valid ,should between {} and {}'.format(name,min,max)
+            return er, mes
+        return er,''
+    def apply(self,data):
+        '''
+
+        :param data:
+        data:{
+                projectGroupName: '',
+                projectEnv: '',
+                vmMEM: 4096,
+                vmCPU: 2,
+                vmInstances: 1
+            }
+        :return:
+        '''
+        error,message = self.dataCheck(data)
+        if error:
+            return {'message':message},ResposeStatus.ParamFail
+        else:
+            ticket = Tickets.get_by_ticketid(self.id)
+            if not ticket:
+                ticket = Tickets()
+                ticket.createTime = datetime.now()
+            if self.requestMan:
+                ticket.requestMan = self.requestMan
+            if self.requestManEng:
+                ticket.requestManEng = self.requestManEng
+            ticket.name = self.name
+            ticket.status = self.status
+            ticket.type = self.type
+            ticket.id = self.id
+            ticket.data = json.dumps(data)
+            if self.email:
+                ticket.email = self.email
+            ticket.save()
+        if self.status == 'Apply':
+            toUser = Config.AUDITOR
+            toHander = Config.AUDITORHANDER
+            content = {
+                "title": "Workflow工单申请",
+                "content": "<p>您有一个新的工单待处理，请登录<a><href='http://workflow.apitops.com'>http://workflow.apitops.com</a></p><p>查看</p>"
+            }
+            applyMail.delay(toUser=toUser, toHander=toHander,mailArgs=content)
+        if self.status == 'Approve':
+            self.Approve(ticket)
+        if self.status == 'Complete':
+            print 'complete'
+        if self.status == 'Refuse':
+            print 'refuse'
+        return {
+                'data': data,
+                'requestMan': self.requestMan,
+                'id': self.id,
+                'type': self.type,
+                'name': self.name,
+                'status': self.status
+        },ResposeStatus.Success
+
 typeDict = {
     "createProject": projectTicket,
-    "restartProject": restartTicket
+    "restartProject": restartTicket,
+    "createKvmVm": createKvmVmTicket
 }
 jobDict = {
     "createProject": createProjectJob,
-    "restartProject": restartProjectJob
+    "restartProject": restartProjectJob,
+    "createKvmVm": createKvmVmJob
 }

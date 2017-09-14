@@ -7,7 +7,7 @@ from ..common.ApiResponse import ApiResponse, ResposeStatus
 from ..common.alopex_auth_sdk import AccessTokenModel
 from app.common.api_doc_helper import get_request_parser_doc_dist
 from app.common.AuthenticateDecorator import need_user
-from app.domains.tickets import ticketList ,typeDict,getTicketInfo,deleteTicketInfo,auditTicket
+from app.domains.tickets import ticketList ,typeDict,getTicketInfo,deleteTicketInfo
 from flasgger import swag_from
 
 def get_args(return_parse_args=True):

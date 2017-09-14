@@ -8,11 +8,9 @@ from app import celery
 from config import Config
 
 
-def saveProjcetToConsul(pid):
+def saveProjcetToConsul(pid,rpclient):
     c=consul.Consul()
-    BasekitClient = Client(Config.ONEKIT_RPC, timeout=3000, passive_heartbeat=False)
-    res = BasekitClient.GetProjectInfo(pid)
-    BasekitClient.close()
+    res = rpclient.GetProjectInfo(pid)
     port = 8000+int(pid)
     projectType = getProjectType(pid)
     projectName = res['name']
@@ -37,6 +35,8 @@ def saveProjects():
     c.kv.delete('services/',recurse=True)
     r = httpRequset(uri='/api/projects')
     projects = r.json()['data']
+    BasekitClient = Client(Config.ONEKIT_RPC, timeout=3000, passive_heartbeat=False)
     for project in projects:
         if project['type'].startswith('Java'):
-             saveProjcetToConsul(project['id'])
+             saveProjcetToConsul(project['id'],BasekitClient)
+    BasekitClient.close()

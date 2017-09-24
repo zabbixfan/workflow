@@ -89,6 +89,7 @@ def logout():
     response.delete_cookie('accesstoken')
     return response
 def SignatureGeneration(res_dict={}, secret_key="", time_out=300):
+    print res_dict
     key_list = res_dict.keys()
     key_list.sort()
     str = u''

@@ -12,7 +12,6 @@ def SignatureGeneration(res_dict={}, secret_key=""):
     :param res_dict: 签名参数体
     :return:
     """
-    print res_dict
     key_list = res_dict.keys()
     key_list.sort()
     sign_str = u''

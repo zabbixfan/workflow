@@ -1,9 +1,9 @@
-# #!coding:utf-8
-# import sys
-# reload(sys)
-# import json
-# sys.setdefaultencoding('utf-8')
-# from app.common.httpHelp import httpRequset
+#!coding:utf-8
+import sys
+reload(sys)
+import json
+sys.setdefaultencoding('utf-8')
+from app.common.httpHelp import httpRequset
 # import threading
 # from concurrent import futures
 # repo_url = "http://admin:admin123@repository.apitops.com/service/local/repositories/snapshots/content"
@@ -47,17 +47,81 @@ import json
 import requests
 import sys
 
-CODEHUB_TOKEN = 'imfeye86uxakg8LG8ZYQ'
-CODEHUB_URL = 'https://codehub.tops001.com'
+# CODEHUB_TOKEN = 'imfeye86uxakg8LG8ZYQ'
+# CODEHUB_URL = 'https://codehub.tops001.com'
+#
+# commit ='44967e59'
+# pid = 47
+# head = {'PRIVATE-TOKEN': CODEHUB_TOKEN}
+# uri = "/api/v4/projects/{pid}/repository/commits/{commit}".format(pid=pid,commit=commit)
+# url = "{}{}".format(CODEHUB_URL,uri)
+# try:
+#     r = requests.get(url=url,headers=head)
+# except Exception as e:
+#     print e
+# if r.status_code < 300:
+#     print r.json()['message']
 
-commit ='44967e59'
-pid = 47
-head = {'PRIVATE-TOKEN': CODEHUB_TOKEN}
-uri = "/api/v4/projects/{pid}/repository/commits/{commit}".format(pid=pid,commit=commit)
-url = "{}{}".format(CODEHUB_URL,uri)
-try:
-    r = requests.get(url=url,headers=head)
-except Exception as e:
-    print e
-if r.status_code < 300:
-    print r.json()['message']
+# params = {
+#     'search': 'BrokerService'
+# }
+# from config import Config
+# head = {'PRIVATE-TOKEN': 'imfeye86uxakg8LG8ZYQ'}
+# import requests
+# r = requests.get(url='https://codehub.tops001.com/api/v4/groups', params=params, headers=head)
+# print r.json()[0]['name']
+
+import Queue
+import random
+import time
+import threading
+# q=Queue.Queue()
+# def producer():
+#     while True:
+#         number=random.randint(1,10)
+#         q.put(number)
+#         time.sleep(1)
+#         print 'producer:',number
+#     return
+#
+# def consumer():
+#     while True:
+#         if not q.empty():
+#             item=q.get()
+#             print 'consumer:',item
+#     return
+#
+# if __name__ == '__main__':
+#     t1=threading.Thread(target=producer)
+#     t2=threading.Thread(target=consumer)
+#     t1.start()
+#     t2.start()
+
+
+
+class A(object):
+    def foo1(self):
+        print "A"
+class B(object):
+    def foo2(self):
+        pass
+class C(A):
+    def foo1(self):
+        print "C"
+class D(B, C):
+    pass
+
+d = D()
+d.foo1()
+
+def bob(mylist):
+    for i in range(0,len(mylist)-1):
+        for j in range(0,len(mylist)-1-i):
+            if mylist[j]>mylist[j+1]:
+                tmp = mylist[j]
+                mylist[j]=mylist[j+1]
+                mylist[j+1]=tmp
+        print mylist
+    return mylist
+m=[1,2,3,4,0,7,3,8,2]
+print bob(m)

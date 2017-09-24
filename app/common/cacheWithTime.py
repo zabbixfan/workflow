@@ -1,6 +1,6 @@
 from functools import wraps
 import time
-def cache(timeout=300):
+def cache(timeout=3600):
     def deco(func):
         memo = {}
         times = {}
@@ -17,12 +17,4 @@ def cache(timeout=300):
         return _wrapper
     return deco
 
-
-
-# def a(a):
-#     time.sleep(2)
-#     print "in function"
-#     import os
-#     os.system('date')
-#     return 10
 

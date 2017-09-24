@@ -13,6 +13,7 @@ class ipPool(db.Model):
     name = db.Column(db.String(64))
     type = db.Column(db.String(32))
     create_time = db.Column(db.DATETIME)
+    sys_time = db.Column(db.DATETIME)
     def save(self,wait_commit=False):
         if not self.id:
             self.id=uuid().get_hex()

@@ -12,3 +12,10 @@ def getIpPool(keyword):
             'status': item.status
         })
     return res
+
+def deleteIp(ip):
+    q = ipPool.query.filter(ipPool.ip == ip).first()
+    q.status='unUsed'
+    q.type=''
+    q.commit()
+    return ''

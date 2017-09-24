@@ -6,7 +6,6 @@ from ..common.ApiResponse import ApiResponse, ResposeStatus
 from app.common.api_doc_helper import get_request_parser_doc_dist
 from app.common.AuthenticateDecorator import need_user
 from app.domains.kvm import kvmList,createVm,operateVm
-from app.tasks.syncIpPool import syncIp
 from flasgger import swag_from
 
 def get_args(return_parse_args=True):
@@ -41,28 +40,17 @@ class kvms(Resource):
         return ApiResponse(kvmList(keyword=args.keyword,offset=args.offset,limit=args.limit,status=args.status))
 
     @swag_from(get_request_parser_doc_dist("add a kvm", ["Kvms"], post_args(False)))
-    @need_user()
+    @need_user(roles=['admin'])
     def post(self):
-        res={}
         args = post_args()
         return ApiResponse(createVm(args.instances,args.group,args.env,args.cpu,args.memory))
-    #
-    # @need_user(roles=["admin"])
-    # def put(self):
-    #     res={}
-    #     args = audit_args()
-    #     res,status = auditTicket(id=args.id,status=args.status)
-    #     return ApiResponse(res,status) if res else ApiResponse(res,status=ResposeStatus.Fail)
 
 class kvm(Resource):
     @swag_from(get_request_parser_doc_dist("change kvm status", ["Kvms"], operate_args(False)))
-    @need_user(roles=['admin'])
+    # @need_user(roles=['admin'])
     def put(self,id):
         args = operate_args()
         return ApiResponse(operateVm(id,args.action))
-    # @need_user()
-    # def get(self,id):
-    #     return ApiResponse(getTicketInfo(id))
     @swag_from(get_request_parser_doc_dist("delete a kvm", ["Kvms"]))
     @need_user(roles=['admin'])
     def delete(self,id):

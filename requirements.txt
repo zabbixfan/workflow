@@ -19,4 +19,4 @@ requests
 pyzmail
 python-consul==0.7.0
 futures
-
+python-ldap==2.4.28

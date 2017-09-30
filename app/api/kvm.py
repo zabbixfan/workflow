@@ -47,7 +47,7 @@ class kvms(Resource):
 
 class kvm(Resource):
     @swag_from(get_request_parser_doc_dist("change kvm status", ["Kvms"], operate_args(False)))
-    # @need_user(roles=['admin'])
+    @need_user(roles=['admin'])
     def put(self,id):
         args = operate_args()
         return ApiResponse(operateVm(id,args.action))

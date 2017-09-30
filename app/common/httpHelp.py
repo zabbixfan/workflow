@@ -29,7 +29,7 @@ def httpRequset(uri,url=None,method='get',headers=None,params=None,data=None,sec
         'put': requests.put,
         'delete': requests.delete,
     }
-    res = request[method](url=fullurl, headers=head,params=params,data=data,json=jsons)
+    res = request[method](url=fullurl, headers=head,params=params,data=data,json=jsons,timeout=3)
     return res
 @cache(timeout=3660)
 def getUserInfoByName(name):
@@ -52,3 +52,25 @@ def getNameByPath(name):
         groupName = name
     return groupName
 
+def getUserBySystime(sysTime=None):
+    params={}
+    if sysTime:
+        params={
+            'starttime':sysTime
+        }
+    r = httpRequset(url=Config.AUTH_SERVER_HOST_GA,uri='/api/usersync',params=params)
+    if r.status_code < 300:
+        res = r.json()['data']
+    else:
+        res= []
+    return res
+
+def isUserExist(userId=None):
+    if userId:
+        r = httpRequset(url=Config.AUTH_SERVER_HOST_GA,uri='/api/userinfo/{}'.format(userId))
+        if r.status_code < 300:
+            res = r.json()['data']
+            if res:
+                if res['status'] == 'regular':
+                    return True
+    return False

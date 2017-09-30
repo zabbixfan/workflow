@@ -111,8 +111,8 @@ class C(A):
 class D(B, C):
     pass
 
-d = D()
-d.foo1()
+# d = D()
+# d.foo1()
 
 def bob(mylist):
     for i in range(0,len(mylist)-1):
@@ -123,5 +123,11 @@ def bob(mylist):
                 mylist[j+1]=tmp
         print mylist
     return mylist
-m=[1,2,3,4,0,7,3,8,2]
-print bob(m)
+# m=[1,2,3,4,0,7,3,8,2]
+# print bob(m)
+import base64
+import binascii,hashlib
+rel = '{MD5}' + base64.b64encode(binascii.unhexlify(hashlib.md5('10275858').hexdigest()))
+print hashlib.md5('10275858').hexdigest()
+print binascii.unhexlify(hashlib.md5('10275858').hexdigest())
+print rel

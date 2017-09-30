@@ -9,4 +9,4 @@ sys.setdefaultencoding('utf8')
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6210,threaded=True,debug=Config.DEBUG)
+    app.run(host='0.0.0.0', port=6210,threaded=True,debug=True)

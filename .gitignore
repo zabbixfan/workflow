@@ -6,3 +6,4 @@ celerybeat.pid
 *.pyc
 */*.pyc
 config.py
+wifiUserInit.py

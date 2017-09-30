@@ -47,7 +47,7 @@ def createVm(instances,group,env,cpu=2,memory=4096):
         server.manager=manager
         server.type='kvm'
         server.commit()
-        createKvmVmbackEnd(query,server.ip,backEndCreate=True,manager=manager)
+        createKvmVmbackEnd.delay(query,server.ip,backEndCreate=True,manager=manager)
     return ''
 
 def operateVm(id,action):
@@ -57,5 +57,5 @@ def operateVm(id,action):
         ip=server.ip
         server.status = 'Locking'
         server.commit()
-        operateKvmVmJob(name,ip,action)
+        operateKvmVmJob.delay(name,ip,action)
     return ''

@@ -4,4 +4,4 @@ from flask_restful import Api
 
 api = Api(prefix='/api', catch_all_404s=True)
 
-import demo,user,tickets,serviceStatus,ticketLogs,projectGroup,ipPool,webHook,kvm
+import demo,user,tickets,serviceStatus,ticketLogs,projectGroup,ipPool,webHook,kvm,wifiUser
